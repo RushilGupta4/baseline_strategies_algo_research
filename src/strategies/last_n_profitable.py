@@ -43,7 +43,7 @@ class LastNProfitable(BaseStrategy):
                 [
                     {
                         "symbol": self._symbol,
-                        "timestamp": self._data.iloc[i]["time"].replace(
+                        "timestamp": self._data.iloc[i]["date"].replace(
                             hour=9, minute=15, second=0
                         ),
                         "price": self._data.iloc[i]["open"],
@@ -51,7 +51,7 @@ class LastNProfitable(BaseStrategy):
                     },
                     {
                         "symbol": self._symbol,
-                        "timestamp": self._data.iloc[i]["time"].replace(
+                        "timestamp": self._data.iloc[i]["date"].replace(
                             hour=15, minute=30, second=0
                         ),
                         "price": self._data.iloc[i]["close"],
@@ -66,7 +66,7 @@ class LastNProfitable(BaseStrategy):
 
             self._transactions = pd.concat([self._transactions, new_transactions])
 
-        self._transactions.reset_index(drop=True, inplace=True)
+        self._transactions.set_index("timestamp", drop=True, inplace=True)
 
         return self._transactions
 
@@ -75,27 +75,27 @@ if __name__ == "__main__":
     data = pd.DataFrame.from_dict(
         [
             {
-                "time": datetime(year=2021, month=1, day=1),
+                "date": datetime(year=2021, month=1, day=1),
                 "open": 10,
                 "close": 20,
             },
             {
-                "time": datetime(year=2021, month=1, day=2),
+                "date": datetime(year=2021, month=1, day=2),
                 "open": 20,
                 "close": 30,
             },
             {
-                "time": datetime(year=2021, month=1, day=3),
+                "date": datetime(year=2021, month=1, day=3),
                 "open": 30,
                 "close": 40,
             },
             {
-                "time": datetime(year=2021, month=1, day=4),
+                "date": datetime(year=2021, month=1, day=4),
                 "open": 37,
                 "close": 38,
             },
             {
-                "time": datetime(year=2021, month=1, day=5),
+                "date": datetime(year=2021, month=1, day=5),
                 "open": 38,
                 "close": 50,
             },
