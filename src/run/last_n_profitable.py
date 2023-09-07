@@ -25,7 +25,7 @@ def run_for_symbol(file_name):
 
     transactions.to_csv(output_path)
 
-    print(f"{symbol_name.ljust(15, ' ')} | Path: {output_path}")
+    print(f"{symbol_name.ljust(15)} | Path: {output_path}")
 
 
 def run_last_n_profitable():
