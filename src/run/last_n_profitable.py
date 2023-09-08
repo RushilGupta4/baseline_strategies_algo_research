@@ -8,7 +8,7 @@ from strategies.last_n_profitable import LastNProfitable
 from constants import TransactionSide
 
 N_DAYS = 2
-TIME_SPAN = 30
+TIME_SPAN = 90
 BASE_PATH = os.path.join("data", "zerodha_d1")
 OUTPUT_BASE_PATH = os.path.join("output", f"last_{N_DAYS}_days_profitable")
 
@@ -51,7 +51,7 @@ def run_for_symbol(file_name):
 
     trades_taken = len(transactions)
     if trades_taken > 0:
-        returns = mean(returns) * 100
+        returns = sum(returns) * 100
     else:
         returns = 0
 
@@ -91,7 +91,7 @@ def run_for_symbol(file_name):
         "trades_taken": str(trades_taken).ljust(2),
     }
 
-    res = [f"{key}: {value}" for key, value in summary_dict_new.items()]
+    res = [f"{key}: {value.ljust(7)}" for key, value in summary_dict_new.items()]
 
     print(f"{symbol_name.ljust(15, ' ')} | {' | '.join(res)}")
 

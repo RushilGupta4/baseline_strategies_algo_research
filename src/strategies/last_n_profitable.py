@@ -28,9 +28,12 @@ class LastNProfitable(BaseStrategy):
             if days_passed < self._n_days:
                 continue
 
+            if i == len(self._data) - 1:
+                continue
+
             profitable = self._data.iloc[i]["close"] > self._data.iloc[i]["open"]
 
-            self._data.loc[i, "profitable"] = profitable
+            self._data.loc[i + 1, "profitable"] = profitable
 
             if not profitable:
                 days_passed = 0
