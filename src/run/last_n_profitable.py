@@ -8,7 +8,7 @@ from strategies.last_n_profitable import LastNProfitable
 from constants import TransactionSide
 
 N_DAYS = 2
-TIME_SPAN = 90
+TIME_SPAN = 30
 BASE_PATH = os.path.join("data", "zerodha_d1")
 OUTPUT_BASE_PATH = os.path.join("output", f"last_{N_DAYS}_days_profitable")
 
