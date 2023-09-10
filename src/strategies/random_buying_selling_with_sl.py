@@ -25,7 +25,7 @@ class RandomBuyingSellingWithSL(BaseStrategy):
             else:
                 last_transaction = self._transactions.iloc[-1]["side"]
 
-            if buy and last_transaction == TransactionSide.SELL:
+            if buy and last_transaction.value == TransactionSide.SELL.value:
                 transactions.append(
                     {
                         "symbol": self._symbol,
@@ -42,7 +42,7 @@ class RandomBuyingSellingWithSL(BaseStrategy):
                 )
                 last_buy = self._data.iloc[i]["open"]
 
-            if sell and last_transaction == TransactionSide.BUY:
+            if sell and last_transaction.value == TransactionSide.BUY.value:
                 # if sl was hit in the day, sell on sl price
                 if self._data.iloc[i]["low"] < current_sl:
                     transactions.append(
@@ -105,7 +105,7 @@ if __name__ == "__main__":
         ],
     )
 
-    last_n_profitable = LastNProfitable("BANKNIFTY", n_days=2, data=data)
-    results = last_n_profitable.run()
+    strategy = RandomBuyingSellingWithSL("BANKNIFTY", n_days=2, data=data)
+    results = strategy.run()
 
     print(results)
