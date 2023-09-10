@@ -13,14 +13,10 @@ class LastNProfitable(BaseStrategy):
 
         self._n_days = n_days
 
-    def run(self) -> pd.DataFrame:
-        if self._data.empty:
-            raise Exception("No data was provided")
-
-        # Part 1: Calculate the average of the last n days
-
+    def _run(self) -> list:
         self._data["profitable"] = False
 
+        # Part 1: Calculate the average of the last n days
         days_passed = 0
 
         for i, row in self._data.iterrows():
@@ -38,40 +34,35 @@ class LastNProfitable(BaseStrategy):
             if not profitable:
                 days_passed = 0
 
+        transactions = []
+
         for i, row in self._data.iterrows():
             if not self._data.iloc[i]["profitable"]:
                 continue
 
-            new_transactions = pd.DataFrame.from_dict(
-                [
-                    {
-                        "symbol": self._symbol,
-                        "timestamp": self._data.iloc[i]["date"].replace(
-                            hour=9, minute=15, second=0
-                        ),
-                        "price": self._data.iloc[i]["open"],
-                        "side": TransactionSide.BUY,
-                    },
-                    {
-                        "symbol": self._symbol,
-                        "timestamp": self._data.iloc[i]["date"].replace(
-                            hour=15, minute=30, second=0
-                        ),
-                        "price": self._data.iloc[i]["close"],
-                        "side": TransactionSide.SELL,
-                    },
-                ]
+            transactions.append(
+                {
+                    "symbol": self._symbol,
+                    "timestamp": self._data.iloc[i]["date"].replace(
+                        hour=9, minute=15, second=0
+                    ),
+                    "price": self._data.iloc[i]["open"],
+                    "side": TransactionSide.BUY,
+                }
             )
 
-            if self._transactions.empty:
-                self._transactions = new_transactions
-                continue
+            transactions.append(
+                {
+                    "symbol": self._symbol,
+                    "timestamp": self._data.iloc[i]["date"].replace(
+                        hour=15, minute=30, second=0
+                    ),
+                    "price": self._data.iloc[i]["close"],
+                    "side": TransactionSide.SELL,
+                }
+            )
 
-            self._transactions = pd.concat([self._transactions, new_transactions])
-
-        self._transactions.set_index("timestamp", drop=True, inplace=True)
-
-        return self._transactions
+        return transactions
 
 
 if __name__ == "__main__":

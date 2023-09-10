@@ -7,7 +7,7 @@ import os
 from strategies.last_n_profitable import LastNProfitable
 from constants import TransactionSide
 
-N_DAYS = 2
+N_DAYS = 3
 TIME_SPAN = 30
 BASE_PATH = os.path.join("data", "zerodha_d1")
 OUTPUT_BASE_PATH = os.path.join("output", f"last_{N_DAYS}_days_profitable")
@@ -30,7 +30,10 @@ def run_for_symbol(file_name):
 
     strategy = LastNProfitable(symbol=symbol_name, n_days=N_DAYS, data=data)
 
-    transactions = strategy.run()
+    try:
+        transactions = strategy.run()
+    except Exception as e:
+        print(f"\nException occured while running for symbol {symbol_name}: {str(e)}\n")
 
     output_path = os.path.join(OUTPUT_BASE_PATH, f"{symbol_name}.xlsx")
 
@@ -75,9 +78,7 @@ def run_for_symbol(file_name):
             transactions.reset_index(drop=True, inplace=True)
             transactions.set_index("timestamp", drop=True, inplace=True)
     except Exception as e:
-        print(
-            f"\nException occured while processing symbol {symbol_name}: {str(e)} * Dataframe: {transactions}\n"
-        )
+        print(f"\nException occured while processing symbol {symbol_name}: {str(e)}\n")
 
     # ["stock_growth"] = market_end_price /
 

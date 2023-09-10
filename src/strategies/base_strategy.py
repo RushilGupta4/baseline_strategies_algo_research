@@ -10,6 +10,26 @@ class BaseStrategy(ABC):
             columns=["symbol", "timestamp", "price", "side"]
         )
 
-    @abstractmethod
     def run(self) -> pd.DataFrame:
+        is_empty = False
+        is_dataframe = isinstance(self._data, pd.DataFrame)
+
+        if is_dataframe:
+            if self._data.empty:
+                is_empty = True
+        elif not bool(self._data):
+            is_empty = True
+
+        if is_empty:
+            raise Exception("No data was provided")
+
+        transactions = self._run()
+
+        if len(transactions) > 0:
+            self._transactions = pd.DataFrame.from_dict(transactions)
+            self._transactions.set_index("timestamp", drop=True, inplace=True)
+        return self._transactions
+
+    @abstractmethod
+    def _run(self) -> list:
         pass
