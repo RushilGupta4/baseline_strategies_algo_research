@@ -10,12 +10,11 @@ class RandomBuyingSellingWithSL(BaseStrategy):
     def __init__(self, symbol, data: pd.DataFrame = pd.DataFrame.empty):
         super().__init__(symbol=symbol, data=data)
 
-    def run(self) -> pd.DataFrame:
-        if self._data.empty:
-            raise Exception("No data was provided")
-
+    def _run(self) -> list:
         current_sl = 0
         last_buy = 0
+
+        transactions = []
 
         for i, row in self._data.iterrows():
             buy = randint(0, 1)
@@ -26,9 +25,8 @@ class RandomBuyingSellingWithSL(BaseStrategy):
             else:
                 last_transaction = self._transactions.iloc[-1]["side"]
 
-            new_transactions = []
             if buy and last_transaction == TransactionSide.SELL:
-                new_transactions.append(
+                transactions.append(
                     {
                         "symbol": self._symbol,
                         "timestamp": self._data.iloc[i]["date"].replace(
@@ -47,7 +45,7 @@ class RandomBuyingSellingWithSL(BaseStrategy):
             if sell and last_transaction == TransactionSide.BUY:
                 # if sl was hit in the day, sell on sl price
                 if self._data.iloc[i]["low"] < current_sl:
-                    new_transactions.append(
+                    transactions.append(
                         {
                             "symbol": self._symbol,
                             "timestamp": self._data.iloc[i]["date"].replace(
@@ -61,7 +59,7 @@ class RandomBuyingSellingWithSL(BaseStrategy):
 
                 # only buy if price > buy price
                 elif self._data.iloc[i]["close"] > last_buy:
-                    new_transactions.append(
+                    transactions.append(
                         {
                             "symbol": self._symbol,
                             "timestamp": self._data.iloc[i]["date"].replace(
@@ -73,17 +71,7 @@ class RandomBuyingSellingWithSL(BaseStrategy):
                     )
                     last_transaction = TransactionSide.SELL
 
-            new_transactions = pd.DataFrame.from_dict(new_transactions)
-
-            if self._transactions.empty:
-                self._transactions = new_transactions
-                continue
-
-            self._transactions = pd.concat([self._transactions, new_transactions])
-
-        self._transactions.set_index("timestamp", drop=True, inplace=True)
-
-        return self._transactions
+        return transactions
 
 
 if __name__ == "__main__":
