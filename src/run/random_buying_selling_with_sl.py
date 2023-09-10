@@ -7,7 +7,7 @@ import os
 from strategies.random_buying_selling_with_sl import RandomBuyingSellingWithSL
 from constants import TransactionSide
 
-TIME_SPAN = 90
+TIME_SPAN = 30
 BASE_PATH = os.path.join("data", "zerodha_d1")
 OUTPUT_BASE_PATH = os.path.join("output", f"random_buying_selling_with_sl")
 
