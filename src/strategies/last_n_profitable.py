@@ -1,7 +1,7 @@
 from datetime import datetime
 import pandas as pd
 
-import os
+import utils
 
 from strategies.base_strategy import BaseStrategy
 from constants import TransactionSide
@@ -40,16 +40,22 @@ class LastNProfitable(BaseStrategy):
             if not self._data.iloc[i]["profitable"]:
                 continue
 
+            open = self._data.iloc[i]["open"]
+            quantity = utils.get_quantity(open, self._capital)
+
             transactions.append(
                 {
                     "symbol": self._symbol,
                     "timestamp": self._data.iloc[i]["date"].replace(
                         hour=9, minute=15, second=0
                     ),
-                    "price": self._data.iloc[i]["open"],
+                    "price": open,
+                    "quantity": quantity,
                     "side": TransactionSide.BUY,
                 }
             )
+
+            close = self._data.iloc[i]["close"]
 
             transactions.append(
                 {
@@ -57,7 +63,8 @@ class LastNProfitable(BaseStrategy):
                     "timestamp": self._data.iloc[i]["date"].replace(
                         hour=15, minute=30, second=0
                     ),
-                    "price": self._data.iloc[i]["close"],
+                    "price": close,
+                    "quantity": quantity,
                     "side": TransactionSide.SELL,
                 }
             )

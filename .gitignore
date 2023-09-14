@@ -1,6 +1,5 @@
 output
 instruments.csv
-runner.py
 
 creds/
 broker_feed/

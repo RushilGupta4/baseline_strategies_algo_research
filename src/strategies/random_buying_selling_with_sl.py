@@ -5,6 +5,8 @@ from random import randint
 from strategies.base_strategy import BaseStrategy
 from constants import TransactionSide
 
+import utils
+
 
 class RandomBuyingSellingWithSL(BaseStrategy):
     def __init__(self, symbol, data: pd.DataFrame = pd.DataFrame.empty):
@@ -13,38 +15,57 @@ class RandomBuyingSellingWithSL(BaseStrategy):
     def _run(self) -> list:
         current_sl = 0
         last_buy = 0
+        current_quantity = 0
 
         transactions = []
+
+        # Base case
+        last_transaction = TransactionSide.SELL
 
         for i, row in self._data.iterrows():
             buy = randint(0, 1)
             sell = randint(0, 1)
 
-            if self._transactions.empty:
-                last_transaction = TransactionSide.SELL
-            else:
-                last_transaction = self._transactions.iloc[-1]["side"]
-
             if buy and last_transaction.value == TransactionSide.SELL.value:
+                is_close = randint(0, 1)
+                if is_close:
+                    price = row["close"]
+                    timestamp = row["date"].replace(hour=15, minute=30, second=0)
+                else:
+                    price = row["open"]
+                    timestamp = row["date"].replace(hour=9, minute=15, second=0)
+
+                max_quantity = utils.get_quantity(price, self._capital)
+                quantity = randint(1, max_quantity)
+
                 transactions.append(
                     {
                         "symbol": self._symbol,
-                        "timestamp": self._data.iloc[i]["date"].replace(
-                            hour=9, minute=15, second=0
-                        ),
-                        "price": self._data.iloc[i]["open"],
+                        "timestamp": timestamp,
+                        "price": row["open"],
+                        "quantity": quantity,
                         "side": TransactionSide.BUY,
                     }
                 )
+
                 last_transaction = TransactionSide.BUY
-                current_sl = self._data.iloc[i]["low"] - 2 * (
-                    self._data.iloc[i]["high"] - (self._data.iloc[i]["close"])
-                )
-                last_buy = self._data.iloc[i]["open"]
+
+                # SL
+                current_sl = row["low"] - 2 * (row["high"] - (row["low"]))
+                last_buy = row["open"]
+                current_quantity = quantity
 
             if sell and last_transaction.value == TransactionSide.BUY.value:
+                is_close = randint(0, 1)
+                if is_close:
+                    price = row["close"]
+                    timestamp = row["date"].replace(hour=15, minute=30, second=0)
+                else:
+                    price = row["open"]
+                    timestamp = row["date"].replace(hour=9, minute=15, second=0)
+
                 # if sl was hit in the day, sell on sl price
-                if self._data.iloc[i]["low"] < current_sl:
+                if row["low"] < current_sl:
                     transactions.append(
                         {
                             "symbol": self._symbol,
@@ -52,24 +73,37 @@ class RandomBuyingSellingWithSL(BaseStrategy):
                                 hour=15, minute=30, second=0
                             ),
                             "price": current_sl,
+                            "quantity": current_quantity,
                             "side": TransactionSide.SELL,
                         }
                     )
                     last_transaction = TransactionSide.SELL
 
-                # only buy if price > buy price
-                elif self._data.iloc[i]["close"] > last_buy:
+                # If random sell signal is generated, and price > entry price
+                elif price > last_buy:
                     transactions.append(
                         {
                             "symbol": self._symbol,
-                            "timestamp": self._data.iloc[i]["date"].replace(
-                                hour=15, minute=30, second=0
-                            ),
-                            "price": self._data.iloc[i]["close"],
+                            "timestamp": timestamp,
+                            "price": price,
+                            "quantity": current_quantity,
                             "side": TransactionSide.SELL,
                         }
                     )
                     last_transaction = TransactionSide.SELL
+
+        # We need to sell here
+        if last_transaction.value == TransactionSide.BUY.value:
+            row = self._data.iloc[-1]
+            transactions.append(
+                {
+                    "symbol": self._symbol,
+                    "timestamp": row["date"].replace(hour=15, minute=30, second=0),
+                    "price": row["close"],
+                    "quantity": current_quantity,
+                    "side": TransactionSide.SELL,
+                }
+            )
 
         return transactions
 

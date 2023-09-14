@@ -1,9 +1,12 @@
 from datetime import datetime
+import math
 import pandas as pd
 from random import randint
 
 from strategies.base_strategy import BaseStrategy
 from constants import TransactionSide
+
+import utils
 
 
 class RandomBuyingSelling(BaseStrategy):
@@ -12,40 +15,76 @@ class RandomBuyingSelling(BaseStrategy):
 
     def _run(self) -> list:
         transactions = []
+        quantity_open = 0
         for i, row in self._data.iterrows():
             buy = randint(0, 1)
             sell = randint(0, 1)
 
-            if self._transactions.empty:
-                last_transaction = TransactionSide.SELL
-            else:
-                last_transaction = self._transactions.iloc[-1]["side"]
+            if buy:
+                is_close = randint(0, 1)
+                price = 0
+                timestamp = None
+                if is_close:
+                    price = row["close"]
+                    timestamp = row["date"].replace(hour=15, minute=30, second=0)
+                else:
+                    price = row["open"]
+                    timestamp = row["date"].replace(hour=9, minute=15, second=0)
 
-            if buy and last_transaction.value == TransactionSide.SELL.value:
+                max_quantity = utils.get_quantity(price, self._capital)
+                quantity = randint(1, max_quantity)
+
                 transactions.append(
                     {
                         "symbol": self._symbol,
-                        "timestamp": self._data.iloc[i]["date"].replace(
-                            hour=9, minute=15, second=0
-                        ),
-                        "price": self._data.iloc[i]["open"],
+                        "timestamp": timestamp,
+                        "price": price,
+                        "quantity": quantity,
                         "side": TransactionSide.BUY,
                     }
                 )
-                last_transaction = TransactionSide.BUY
+                quantity_open += quantity
 
-            if sell and last_transaction.value == TransactionSide.BUY.value:
+            # For each symbol, we only want to sell if there is some quantity that exists
+            if sell:
+                is_close = randint(0, 1)
+                price = 0
+                timestamp = None
+                if is_close:
+                    price = row["close"]
+                    timestamp = row["date"].replace(hour=15, minute=30, second=0)
+                else:
+                    price = row["open"]
+                    timestamp = row["date"].replace(hour=9, minute=15, second=0)
+
+                max_quantity = utils.get_quantity(price, self._capital)
+                quantity = randint(1, max_quantity)
+
                 transactions.append(
                     {
                         "symbol": self._symbol,
-                        "timestamp": self._data.iloc[i]["date"].replace(
-                            hour=15, minute=30, second=0
-                        ),
-                        "price": self._data.iloc[i]["close"],
+                        "timestamp": timestamp,
+                        "price": price,
+                        "quantity": quantity,
                         "side": TransactionSide.SELL,
                     }
                 )
-                last_transaction = TransactionSide.SELL
+
+                quantity_open -= quantity
+
+        if quantity_open != 0:
+            date = self._data.iloc[-1]["date"].replace(hour=15, minute=30, second=0)
+            side = TransactionSide.SELL if quantity_open > 0 else TransactionSide.BUY
+
+            transactions.append(
+                {
+                    "symbol": self._symbol,
+                    "timestamp": date,
+                    "price": self._data.iloc[-1]["close"],
+                    "quantity": abs(quantity_open),
+                    "side": side,
+                }
+            )
 
         return transactions
 
@@ -81,7 +120,7 @@ if __name__ == "__main__":
         ],
     )
 
-    last_n_profitable = LastNProfitable("BANKNIFTY", n_days=2, data=data)
-    results = last_n_profitable.run()
+    strategy = RandomBuyingSelling("BANKNIFTY", n_days=2, data=data)
+    results = strategy.run()
 
     print(results)
