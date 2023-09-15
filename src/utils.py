@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 import math
 import os
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import traceback
 import dotenv
 import pandas as pd
@@ -25,18 +25,22 @@ def get_files_in_dir(dir):
 
 
 def get_executor(workers=5):
-    return ProcessPoolExecutor(max_workers=workers)
+    return ThreadPoolExecutor(max_workers=workers)
 
 
-def get_data_from_path(file_path, timespan):
+def get_data_from_path(file_path, timespan) -> pd.DataFrame:
     data = pd.read_csv(file_path)
+
+    if "time" in data.columns:
+        data.rename(inplace=True, columns={"time": "date"})
 
     data["date"] = pd.to_datetime(data["date"])
 
     latest_date = data.iloc[-1]["date"]
-    oldest_date = latest_date - timedelta(days=timespan)
+    latest_date = latest_date.replace(hour=9, minute=15, second=0)
+    oldest_date = latest_date - timedelta(days=timespan + 1)
 
-    data = data[data["date"] >= oldest_date]
+    data = data[data["date"] > oldest_date]
 
     data.reset_index(drop=True, inplace=True)
     return data
