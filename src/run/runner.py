@@ -4,7 +4,12 @@ from statistics import mean
 import pandas as pd
 
 
-def run_with_dataframe(name, output_dir, input_dir, func, **kwargs):
+BLACKLISTED_FILES = [".DS_Store"]
+
+
+def run_with_dataframe(
+    name, output_dir, input_dir, func, include_dirs=False, subject="Symbol", **kwargs
+):
     line = "-" * 85
 
     print(line)
@@ -14,7 +19,8 @@ def run_with_dataframe(name, output_dir, input_dir, func, **kwargs):
     if not os.path.exists(output_dir) and utils.should_save_files():
         os.makedirs(output_dir, exist_ok=True)
 
-    files = utils.get_files_in_dir(input_dir)
+    files = utils.get_files_in_dir(input_dir, include_dirs)
+    files = [i for i in files if i not in BLACKLISTED_FILES]
 
     # Using utils to be able to switch to different implementations as needed
     executor = utils.get_executor(workers=10)
@@ -45,8 +51,10 @@ def run_with_dataframe(name, output_dir, input_dir, func, **kwargs):
     bottom_5 = sorted_results[-5:]
     bottom_5 = pd.DataFrame.from_dict(bottom_5)
 
-    average_returns = mean([x["returns"] for x in results])
     average_stock_growth = mean([x["stock_growth"] for x in results])
+    average_returns = 0
+    if len(results):
+        average_returns = mean([x["returns"] for x in results])
 
     summary = {
         "average_returns": average_returns,
@@ -62,7 +70,7 @@ def run_with_dataframe(name, output_dir, input_dir, func, **kwargs):
     summary = pd.DataFrame.from_dict([summary])
 
     file_path = f"{output_dir}.xlsx"
-    headers = ["Symbol", "Returns (%)", "Stock Growth (%)", "Trades Taken"]
+    headers = [subject, "Returns (%)", "Stock Growth (%)", "Trades Taken"]
 
     with pd.ExcelWriter(file_path, engine="xlsxwriter") as writer:
         workbook = writer.book
@@ -105,9 +113,12 @@ def run_with_dataframe(name, output_dir, input_dir, func, **kwargs):
             header=["Average Returns (%)", "Market Growth (%)"],
         )
 
-        pd.DataFrame.from_dict(results).to_excel(
+        df = pd.DataFrame.from_records(results)
+        df = df.sort_values(df.columns[0])
+
+        df.to_excel(
             writer,
             sheet_name="Stock Results",
             index=False,
-            header=["Symbol", "Returns (%)", "Stock Growth (%)", "Trades Taken"],
+            header=[subject, "Returns (%)", "Stock Growth (%)", "Trades Taken"],
         )

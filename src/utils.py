@@ -10,12 +10,12 @@ import pandas as pd
 dotenv.load_dotenv()
 
 
-def get_files_in_dir(dir):
+def get_files_in_dir(dir, include_dirs=False):
     paths = []
 
     for fname in os.listdir(dir):
         path = os.path.join(dir, fname)
-        if os.path.isdir(path):
+        if os.path.isdir(path) and not include_dirs:
             # skip directories
             continue
 
