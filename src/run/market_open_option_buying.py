@@ -6,12 +6,12 @@ import pandas as pd
 import os
 from warnings import simplefilter
 
-from strategies.ce_and_pe_buying import _220Entry
+from strategies.market_open_option_buying import MarketOpenOptionBuying
 from constants import TransactionSide
 
 TIME_SPAN = 30
-BASE_PATH = os.path.join("data", "zerodha_m5")
-OUTPUT_BASE_PATH = os.path.join("output", f"ce_and_pe_buying")
+BASE_PATH = os.path.join("data", "zerodha_m5_options")
+OUTPUT_BASE_PATH = os.path.join("output", f"market_buying")
 
 simplefilter("ignore")
 
@@ -25,7 +25,7 @@ def run_for_symbol(dir_path, file_name):
 
     symbol_name = file_name.split(".")[0]
 
-    strategy = _220Entry(symbol=symbol_name, data=data)
+    strategy = MarketOpenOptionBuying(symbol=symbol_name, data=data)
 
     res = strategy.run()
     transactions: pd.DataFrame = res["transactions"]
@@ -47,12 +47,24 @@ def run_for_symbol(dir_path, file_name):
     return {"symbol": symbol_name, "transactions": transactions, **summary_dict}
 
 
+def get_other_side_file(filename):
+    if "CE" in filename:
+        return filename.replace("CE", "PE")
+
+    return filename.replace("PE", "CE")
+
+
 def run_for_date(date):
     dir_path = os.path.join(BASE_PATH, date)
     symbols = utils.get_files_in_dir(dir_path)
 
+    symbols.sort()
+
+    file_one = symbols[len(symbols) // 2]
+    file_two = get_other_side_file(file_one)
+
     summary_dicts = []
-    for file_name in symbols:
+    for file_name in [file_one, file_two]:
         summary_dict = run_for_symbol(dir_path, file_name)
         summary_dicts.append(summary_dict)
 
@@ -87,7 +99,7 @@ def run_for_date(date):
 
 def run():
     run_with_dataframe(
-        name=f"CE and PE Buying",
+        name=f"Market Open Option Buying",
         output_dir=OUTPUT_BASE_PATH,
         input_dir=BASE_PATH,
         func=run_for_date,

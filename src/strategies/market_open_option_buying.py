@@ -9,7 +9,7 @@ from constants import TransactionSide
 import utils
 
 
-class _220Entry(BaseStrategy):
+class MarketOpenOptionBuying(BaseStrategy):
     def __init__(self, symbol, data: pd.DataFrame = pd.DataFrame.empty):
         super().__init__(symbol=symbol, data=data)
 
