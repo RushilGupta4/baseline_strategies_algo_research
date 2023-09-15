@@ -6,7 +6,7 @@ import pandas as pd
 import os
 from warnings import simplefilter
 
-from strategies.market_open_option_buying import MarketOpenOptionBuying
+from strategies.market_open_option_selling import MarketOpenOptionSelling
 from constants import TransactionSide
 
 TIME_SPAN = 30
@@ -25,7 +25,7 @@ def run_for_symbol(dir_path, file_name):
 
     symbol_name = file_name.split(".")[0]
 
-    strategy = MarketOpenOptionBuying(symbol=symbol_name, data=data)
+    strategy = MarketOpenOptionSelling(symbol=symbol_name, data=data)
 
     res = strategy.run()
     transactions: pd.DataFrame = res["transactions"]
@@ -99,7 +99,7 @@ def run_for_date(date):
 
 def run():
     run_with_dataframe(
-        name=f"Market Open Option Buying",
+        name=f"Market Open Option Selling",
         output_dir=OUTPUT_BASE_PATH,
         input_dir=BASE_PATH,
         func=run_for_date,

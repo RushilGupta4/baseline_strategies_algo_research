@@ -9,7 +9,7 @@ from constants import TransactionSide
 import utils
 
 
-class MarketOpenOptionBuying(BaseStrategy):
+class MarketOpenOptionSelling(BaseStrategy):
     def __init__(self, symbol, data: pd.DataFrame = pd.DataFrame.empty):
         super().__init__(symbol=symbol, data=data)
 
@@ -31,13 +31,13 @@ class MarketOpenOptionBuying(BaseStrategy):
                 "timestamp": buy_row["time"],
                 "price": buy_price,
                 "quantity": quantity,
-                "side": TransactionSide.BUY,
+                "side": TransactionSide.SELL,
             },
             {
                 "symbol": self._symbol,
                 "timestamp": sell_row["time"],
                 "price": sell_price,
                 "quantity": quantity,
-                "side": TransactionSide.SELL,
+                "side": TransactionSide.BUY,
             },
         ]
